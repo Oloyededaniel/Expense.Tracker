@@ -1,0 +1,18 @@
+{
+  "name": "Ledger & Lens - Smart Expense Tracker",
+  "short_name": "Ledger & Lens",
+  "description": "AI-powered expense tracking with predictive spending insights",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#10151C",
+  "theme_color": "#10151C",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ledger & Lens — Smart Expense Tracker</title>
+<meta name="theme-color" content="#10151C" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#10151C;
+    --ink-soft:#161D27;
+    --panel:#1A222D;
+    --hairline:#2B3542;
+    --paper:#EDEAE3;
+    --paper-dim:#A9AFB8;
+    --brass:#D4A24E;
+    --brass-soft:#E9C784;
+    --mint:#6FBF97;
+    --coral:#E2725B;
+    --font-display:'Fraunces', serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--brass); color:var(--ink);}
+  a{color:inherit;}
+  .hidden{display:none !important;}
+
+  /* ---------- Ledger header rule motif ---------- */
+  .ledger-rule{border-top:1px solid var(--hairline);}
+  .ledger-rule-brass{border-top:1px solid var(--brass); opacity:.5;}
+
+  .brand{
+    font-family:var(--font-display);
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--brass);
+  }
+  .num{font-family:var(--font-mono);}
+
+  /* ---------- Auth screen ---------- */
+  #authScreen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% -10%, rgba(212,162,78,0.14), transparent 60%),
+      var(--ink);
+  }
+  .auth-card{
+    width:100%;
+    max-width:420px;
+    background:var(--panel);
+    border:1px solid var(--hairline);
+    border-radius:2px;
+    padding:40px 36px;
+  }
+  .field label{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--paper-dim);
+    margin-bottom:6px;
+  }
+  .field input, .field select{
+    width:100%;
+    background:var(--ink-soft);
+    border:1px solid var(--hairline);
+    color:var(--paper);
+    padding:11px 12px;
+    font-family:var(--font-body);
+    font-size:14px;
+    border-radius:2px;
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  .field input:focus, .field select:focus{border-color:var(--brass);}
+  .field{margin-bottom:16px;}
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13.5px;
+    padding:11px 20px;
+    border-radius:2px;
+    border:1px solid transparent;
+    cursor:pointer;
+    transition:transform .1s ease, opacity .15s ease;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn-brass{background:var(--brass); color:var(--ink);}
+  .btn-brass:hover{background:var(--brass-soft);}
+  .btn-ghost{background:transparent; color:var(--paper); border-color:var(--hairline);}
+  .btn-ghost:hover{border-color:var(--brass); color:var(--brass);}
+  .btn-block{width:100%;}
+  .btn[disabled]{opacity:.5; cursor:not-allowed;}
+
+  .tab-toggle{
+    display:flex;
+    border:1px solid var(--hairline);
+    border-radius:2px;
+    overflow:hidden;
+    margin-bottom:28px;
+  }
+  .tab-toggle button{
+    flex:1;
+    background:transparent;
+    color:var(--paper-dim);
+    border:none;
+    padding:10px;
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+  }
+  .tab-toggle button.active{background:var(--brass); color:var(--ink);}
+
+  /* ---------- App shell ---------- */
+  #appScreen{min-height:100vh;}
+  header.topbar{
+    position:sticky; top:0; z-index:20;
+    background:rgba(16,21,28,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--hairline);
+  }
+  .topbar-inner{
+    max-width:1180px; margin:0 auto;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 24px;
+  }
+  .persona-badge{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink);
+    background:var(--mint);
+    padding:5px 10px;
+    border-radius:2px;
+  }
+
+  main{max-width:1180px; margin:0 auto; padding:28px 24px 80px;}
+
+  .grid{display:grid; gap:20px;}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+  .grid-2{grid-template-columns:2fr 1fr;}
+  @media (max-width:900px){
+    .grid-4{grid-template-columns:repeat(2,1fr);}
+    .grid-3{grid-template-columns:1fr;}
+    .grid-2{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--hairline);
+    border-radius:2px;
+    padding:20px 22px;
+  }
+  .panel-title{
+    font-family:var(--font-display);
+    font-size:17px;
+    margin:0 0 4px;
+  }
+  .panel-sub{
+    font-size:12.5px;
+    color:var(--paper-dim);
+    margin:0 0 16px;
+  }
+
+  .stat-value{
+    font-family:var(--font-mono);
+    font-size:28px;
+    font-weight:500;
+    margin:6px 0 2px;
+  }
+  .stat-label{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--paper-dim);
+  }
+  .stat-delta-up{color:var(--coral);}
+  .stat-delta-down{color:var(--mint);}
+
+  table.ledger-table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  table.ledger-table th{
+    text-align:left;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--paper-dim);
+    padding:8px 10px;
+    border-bottom:1px solid var(--hairline);
+  }
+  table.ledger-table td{
+    padding:9px 10px;
+    border-bottom:1px solid var(--hairline);
+  }
+  table.ledger-table tr.anomaly-row td{
+    border-left:2px solid var(--coral);
+    background:rgba(226,114,91,0.08);
+  }
+  .cat-pill{
+    font-family:var(--font-mono);
+    font-size:11px;
+    padding:2px 8px;
+    border-radius:20px;
+    border:1px solid var(--hairline);
+    color:var(--paper-dim);
+    white-space:nowrap;
+  }
+  .amount-cell{font-family:var(--font-mono); text-align:right;}
+  .row-btn{
+    background:none; border:none; color:var(--paper-dim); cursor:pointer;
+    font-family:var(--font-mono); font-size:11px; text-decoration:underline;
+  }
+  .row-btn:hover{color:var(--brass);}
+
+  /* heatmap calendar */
+  .heatmap-grid{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:4px;
+  }
+  .heatmap-cell{
+    aspect-ratio:1;
+    border-radius:2px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:rgba(237,234,227,0.55);
+    border:1px solid var(--hairline);
+  }
+  .heatmap-dow{
+    font-family:var(--font-mono);
+    font-size:9.5px;
+    text-align:center;
+    color:var(--paper-dim);
+    text-transform:uppercase;
+  }
+
+  .chat-log{max-height:220px; overflow-y:auto; margin-bottom:12px;}
+  .chat-bubble{
+    font-size:13.5px;
+    padding:10px 12px;
+    border-radius:2px;
+    margin-bottom:8px;
+    max-width:90%;
+  }
+  .chat-user{background:var(--ink-soft); border:1px solid var(--hairline); margin-left:auto;}
+  .chat-ai{background:rgba(212,162,78,0.08); border:1px solid rgba(212,162,78,0.3);}
+
+  .upload-drop{
+    border:1px dashed var(--hairline);
+    border-radius:2px;
+    padding:22px;
+    text-align:center;
+    font-size:13px;
+    color:var(--paper-dim);
+    cursor:pointer;
+    transition:border-color .15s ease;
+  }
+  .upload-drop:hover{border-color:var(--brass);}
+
+  .toast{
+    position:fixed; bottom:20px; right:20px; z-index:50;
+    background:var(--panel); border:1px solid var(--brass);
+    padding:12px 18px; border-radius:2px; font-size:13px;
+    max-width:320px;
+  }
+
+  .nav-tabs{display:flex; gap:4px; margin-bottom:22px; flex-wrap:wrap;}
+  .nav-tab{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    padding:8px 14px;
+    border:1px solid var(--hairline);
+    border-radius:2px;
+    background:transparent;
+    color:var(--paper-dim);
+    cursor:pointer;
+  }
+  .nav-tab.active{border-color:var(--brass); color:var(--brass);}
+
+  .section{display:none;}
+  .section.active{display:block;}
+
+  .badge-source{
+    font-family:var(--font-mono);
+    font-size:9.5px;
+    color:var(--paper-dim);
+    opacity:.7;
+  }
+
+  ::-webkit-scrollbar{width:8px; height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--hairline); border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ============================= AUTH SCREEN ============================= -->
+<div id="authScreen">
+  <div class="auth-card">
+    <p class="eyebrow" style="margin-bottom:8px;">Smart Expense Tracker</p>
+    <h1 class="brand" style="font-size:30px; margin:0 0 24px;">Ledger &amp; Lens</h1>
+
+    <div class="tab-toggle">
+      <button id="tabLoginBtn" class="active" onclick="setAuthMode('login')">Log In</button>
+      <button id="tabSignupBtn" onclick="setAuthMode('signup')">Sign Up</button>
+    </div>
+
+    <form id="authForm" onsubmit="return handleAuthSubmit(event)">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+      </div>
+      <div class="field hidden" id="incomeField">
+        <label for="income">Monthly income (used for budget suggestions)</label>
+        <input id="income" name="income" type="number" min="0" step="1" placeholder="4000" />
+      </div>
+      <button type="submit" class="btn btn-brass btn-block" id="authSubmitBtn">Log In</button>
+      <p id="authError" class="hidden" style="color:var(--coral); font-size:12.5px; margin-top:12px;"></p>
+    </form>
+  </div>
+</div>
+
+<!-- ============================= APP SCREEN ============================= -->
+<div id="appScreen" class="hidden">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <span class="brand" style="font-size:19px;">Ledger &amp; Lens</span>
+        <span id="personaBadge" class="persona-badge hidden"></span>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <span class="num" id="welcomeUser" style="font-size:12.5px; color:var(--paper-dim);"></span>
+        <button class="btn btn-ghost" style="padding:7px 14px; font-size:12px;" onclick="logout()">Log Out</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-section="dashboard" onclick="showSection('dashboard')">Dashboard</button>
+      <button class="nav-tab" data-section="transactions" onclick="showSection('transactions')">Transactions</button>
+      <button class="nav-tab" data-section="insights" onclick="showSection('insights')">AI Insights</button>
+      <button class="nav-tab" data-section="ask" onclick="showSection('ask')">Ask Your Ledger</button>
+    </div>
+
+    <!-- ---------------- DASHBOARD ---------------- -->
+    <section id="section-dashboard" class="section active">
+      <div class="grid grid-4" style="margin-bottom:20px;">
+        <div class="panel">
+          <div class="stat-label">Total Tracked</div>
+          <div class="stat-value num" id="statTotal">$0</div>
+        </div>
+        <div class="panel">
+          <div class="stat-label">This Month</div>
+          <div class="stat-value num" id="statMonth">$0</div>
+        </div>
+        <div class="panel">
+          <div class="stat-label">Flagged Anomalies</div>
+          <div class="stat-value num" id="statAnomalies">0</div>
+        </div>
+        <div class="panel">
+          <div class="stat-label">Riskiest Week Ahead</div>
+          <div class="stat-value num" id="statRiskWeek" style="font-size:16px;">—</div>
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-bottom:20px;">
+        <div class="panel">
+          <h3 class="panel-title">Weekly spending trend</h3>
+          <p class="panel-sub">Stacked by month, last 3 months of activity</p>
+          <canvas id="chartTrend" height="90"></canvas>
+        </div>
+        <div class="panel">
+          <h3 class="panel-title">Category breakdown</h3>
+          <p class="panel-sub">Current ledger, all categories</p>
+          <canvas id="chartDonut" height="90"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel-title">Spend heatmap</h3>
+        <p class="panel-sub" id="heatmapLabel">This month, day by day</p>
+        <div id="heatmapDow" class="heatmap-grid" style="margin-bottom:6px;"></div>
+        <div id="heatmapGrid" class="heatmap-grid"></div>
+      </div>
+    </section>
+
+    <!-- ---------------- TRANSACTIONS ---------------- -->
+    <section id="section-transactions" class="section">
+      <div class="grid grid-2" style="margin-bottom:20px; align-items:start;">
+        <div class="panel">
+          <h3 class="panel-title">Add a transaction</h3>
+          <p class="panel-sub">Leave category blank to let the AI categorize it — even a brand-new category name works.</p>
+          <form onsubmit="return handleAddTransaction(event)">
+            <div class="grid grid-3">
+              <div class="field">
+                <label for="txnDate">Date</label>
+                <input id="txnDate" type="date" required />
+              </div>
+              <div class="field" style="grid-column:span 2;">
+                <label for="txnDesc">Description</label>
+                <input id="txnDesc" type="text" placeholder="e.g. Whole Foods grocery run" required />
+              </div>
+            </div>
+            <div class="grid grid-3">
+              <div class="field">
+                <label for="txnAmount">Amount</label>
+                <input id="txnAmount" type="number" step="0.01" min="0.01" placeholder="42.00" required />
+              </div>
+              <div class="field" style="grid-column:span 2;">
+                <label for="txnCategory">Category (optional)</label>
+                <input id="txnCategory" type="text" placeholder="Leave blank for AI categorization, or type a new one" />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-brass">Add transaction</button>
+            <span id="addTxnResult" class="badge-source" style="margin-left:10px;"></span>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h3 class="panel-title">Import a CSV</h3>
+          <p class="panel-sub">Columns required: <span class="num">date, description, amount</span></p>
+          <div class="upload-drop" onclick="document.getElementById('csvInput').click()">
+            Click to choose a CSV file
+          </div>
+          <input id="csvInput" type="file" accept=".csv" class="hidden" onchange="handleCsvUpload(event)" />
+          <p id="csvResult" class="badge-source" style="margin-top:10px;"></p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel-title">All transactions</h3>
+        <p class="panel-sub">Rows with a coral left border were flagged as unusual by the anomaly detector.</p>
+        <div style="overflow-x:auto;">
+          <table class="ledger-table">
+            <thead>
+              <tr>
+                <th>Date</th><th>Description</th><th>Category</th><th style="text-align:right;">Amount</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="txnTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- AI INSIGHTS ---------------- -->
+    <section id="section-insights" class="section">
+      <div class="grid grid-2" style="margin-bottom:20px;">
+        <div class="panel">
+          <h3 class="panel-title">30-day forecast</h3>
+          <p class="panel-sub" id="forecastNote">Predicted daily spend with a confidence band</p>
+          <canvas id="chartForecast" height="110"></canvas>
+        </div>
+        <div class="panel">
+          <h3 class="panel-title">Spending persona</h3>
+          <p class="panel-sub">Derived from your category mix via clustering</p>
+          <div id="personaDetail" style="text-align:center; padding:18px 0;">
+            <div class="brand" id="personaName" style="font-size:24px; color:var(--brass);">—</div>
+            <div class="num" id="personaConfidence" style="font-size:12px; color:var(--paper-dim); margin-top:6px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel-title">Recommended budgets</h3>
+        <p class="panel-sub">Personalized ceilings, blending your income with your recent averages</p>
+        <div style="overflow-x:auto;">
+          <table class="ledger-table">
+            <thead>
+              <tr><th>Category</th><th style="text-align:right;">Current avg / mo</th><th style="text-align:right;">Recommended</th><th>Note</th></tr>
+            </thead>
+            <tbody id="budgetTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- ASK YOUR LEDGER ---------------- -->
+    <section id="section-ask" class="section">
+      <div class="panel">
+        <h3 class="panel-title">Ask your ledger</h3>
+        <p class="panel-sub">Try: "How much did I spend on coffee last month?" or "Show me my top 5 most expensive transactions"</p>
+        <div class="chat-log" id="chatLog"></div>
+        <form onsubmit="return handleAskQuestion(event)" style="display:flex; gap:10px;">
+          <input id="askInput" type="text" placeholder="Ask a question about your spending…" style="flex:1; background:var(--ink-soft); border:1px solid var(--hairline); color:var(--paper); padding:11px 12px; border-radius:2px;" required />
+          <button class="btn btn-brass" type="submit">Ask</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

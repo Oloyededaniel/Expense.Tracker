@@ -1,0 +1,12 @@
+# Python
+backend/venv/
+backend/__pycache__/
+backend/ml/__pycache__/
+*.pyc
+*.pyo
+
+# Local database
+backend/*.db
+
+# OS
+.DS_Store
