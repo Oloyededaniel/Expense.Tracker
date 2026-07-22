@@ -3,6 +3,7 @@ import io
 import json
 import datetime
 from collections import defaultdict
+from pathlib import Path
 
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -376,3 +377,14 @@ def categories(
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+# Serve the vanilla frontend from the same process (single-service deploy).
+# Must be registered last so /api/* routes keep priority.
+_frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
+if _frontend_dir.is_dir():
+    app.mount(
+        "/",
+        StaticFiles(directory=str(_frontend_dir), html=True),
+        name="frontend",
+    )

@@ -1,0 +1,14 @@
+# Single-service deploy on Render: API + static frontend from one process.
+# Dashboard: New → Blueprint → connect this repo.
+services:
+  - type: web
+    name: expense-tracker
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: "3.11.9"

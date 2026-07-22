@@ -1,12 +1,8 @@
 // ============================================================================
 // Ledger & Lens - frontend logic
-// Talks to the FastAPI backend at API_BASE. Change this if you deploy the
-// backend somewhere other than localhost:8000.
+// Same-origin: backend serves the frontend, so no absolute API host needed.
 // ============================================================================
-// If you serve this frontend from the same host/port as the FastAPI backend
-// (e.g. behind a reverse proxy), set API_BASE = "" for same-origin requests.
-// By default this points at the backend running locally on port 8000.
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "";
 
 let authMode = "login";
 let authToken = localStorage.getItem("ll_token") || null;
